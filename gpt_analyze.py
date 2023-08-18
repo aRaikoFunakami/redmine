@@ -22,8 +22,11 @@ def plot_and_save(df, column, agg_func, ylabel, save_name, title):
     plt.savefig(f'img/{save_name}.png')
     plt.close()
 
+# Drop duplicates for the column issue_description_length based on issue_id and user_id
+df_unique_issues = df.drop_duplicates(subset=['issue_id', 'user_id'])
+
 # 1. Average number of characters per issue description per user
-plot_and_save(df, 'issue_description_length', 'mean', 'Average Characters', 'avg_chars_issue_desc_per_user', 'Average Characters per Issue Description by User')
+plot_and_save(df_unique_issues, 'issue_description_length', 'mean', 'Average Characters', 'avg_chars_issue_desc_per_user', 'Average Characters per Issue Description by User')
 
 # 2. Total number of comments per user
 plot_and_save(df, 'comment_length', 'count', 'Total Comments', 'total_comments_per_user', 'Total Number of Comments by User')
@@ -38,7 +41,7 @@ plot_and_save(df, 'comment_length', 'mean', 'Average Characters', 'avg_chars_com
 df['unique_days'] = df['comment_date'].dt.date
 
 # Specify start and end dates
-START_DATE = '2023-07-01'
+START_DATE = '2022-08-01'
 END_DATE = '2023-07-31'
 
 # Compute the number of days in the analysis period

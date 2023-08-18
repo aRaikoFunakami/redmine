@@ -9,7 +9,7 @@ api_key = login.api_key
 
 redmine = Redmine(redmine_url, key=api_key)
 
-start_date = datetime(2023, 7, 1)
+start_date = datetime(2022, 8, 1)
 end_date = datetime(2023, 7, 31)
 
 # Fetching data from Redmine
@@ -24,7 +24,7 @@ for issue in issues:
         for journal in issue.journals:
             if hasattr(journal, 'notes') and journal.created_on >= start_date and journal.created_on <= end_date:
                 try:
-                    comment_length = len(journal.notes)
+                    comment_length = len(journal.notes) if hasattr(journal, 'notes') and journal.notes is not None else 0
                     comment_date = journal.created_on
                 except AttributeError:
                     comment_length = 0
@@ -33,7 +33,7 @@ for issue in issues:
                 data.append({
                     'issue_id': issue.id,
                     'user_id': journal.user.id,
-                    'issue_description_length': len(issue.description) if hasattr(issue, 'description') else 0,
+                    'issue_description_length': len(issue.description) if hasattr(issue, 'description') and issue.description is not None else 0,
                     'comment_length': comment_length,
                     'comment_date': comment_date
                 })
