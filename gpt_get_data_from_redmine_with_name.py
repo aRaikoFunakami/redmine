@@ -1,8 +1,7 @@
 import config
 from redminelib import Redmine
 import pandas as pd
-from datetime import datetime
-from ast import literal_eval
+from redminelib import exceptions  # この行を追加
 
 redmine_url = config.redmine_url
 api_key = config.api_key
@@ -12,11 +11,26 @@ redmine = Redmine(redmine_url, key=api_key)
 start_date = config.start_date
 end_date = config.end_date
 
+# プロジェクト覧の読み込み
+df_projects = pd.read_csv('data/projects.csv')
+project_ids = df_projects['project_id'].tolist()
+
 # Fetching data from Redmine
-# updated_on は最後の日時になるため start は指定できるが end は指定してはいけない
-issues = redmine.issue.filter(project_id='*', 
-                              status_id='*',
-                              updated_on=">={0}".format(start_date.strftime('%Y-%m-%d')))
+all_issues = []
+for proj_id in project_ids:
+    try:
+        issues = redmine.issue.filter(
+            project_id=proj_id,
+            status_id='*',
+            updated_on=">={0}".format(start_date.strftime('%Y-%m-%d'))
+        )
+        all_issues.extend(issues)
+    except exceptions.ForbiddenError:
+        print(f"プロジェクトID {proj_id} へのアクセスが禁止されています。")
+    except Exception as e:
+        print(f"プロジェクトID {proj_id} の処理中にエラーが発生しました: {e}")
+
+issues = all_issues
 
 data = []
 
@@ -37,12 +51,13 @@ for issue in issues:
                 data.append({
                     'issue_id': issue.id,
                     'user_id': journal.user.id,
+                    'user_name': journal.user.name,
                     'issue_description_length': len(issue.description) if hasattr(issue, 'description') and issue.description is not None else 0,
                     'comment_length': comment_length,
                     'comment_date': comment_date
                 })
 
 df = pd.DataFrame(data)
-df.to_csv("data/step1_data.csv", index=False)
+df.to_csv("data/step1_data_with_username.csv", index=False)
 
 print("Data saved successfully!")
